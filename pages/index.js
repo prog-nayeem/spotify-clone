@@ -6,10 +6,10 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import HomeComponent from "../components/landingPage/Home";
 import Player from "../components/Player";
-
+import Loader from "../components/Loader";
 export default function Home() {
   const router = useRouter();
-  const { data: session } = useSession({
+  const { status, data: session } = useSession({
     required: true,
     onUnauthenticated() {
       router.replace("/signin");
@@ -21,6 +21,9 @@ export default function Home() {
   //     router.push("/signin"); // Force sign in to hopefully resolve error
   //   }
   // }, [session, router]);
+  if (status === "loading") {
+    return <Loader />;
+  }
 
   return (
     <div>
