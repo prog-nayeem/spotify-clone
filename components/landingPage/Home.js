@@ -1,63 +1,87 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import spotifyApi from "../../lib/spotify";
-import Row from "./Row";
+import { useRecoilState } from "recoil";
+import { searchInputValue } from "../../atoms/searchAtom";
+import SongsPoster from "./SongsPoster";
+import RecentPlayed from "./RecentPlayed";
+import AllSongList from "./AllSongsList";
+import Filter from "./Filter";
 
 const Home = () => {
-  const { data: session } = useSession();
   const [recentPlayed, setRecentPlayed] = useState([]);
-  const [getNewRelease, setGetNewRelease] = useState([]);
-  const [getTopTrack, setGetTopTrack] = useState([]);
-  const [getAlbum, setGetAlbum] = useState([]);
-
-  console.log("get new release : ", getNewRelease);
-  console.log("get top track : ", getTopTrack);
-  console.log("get album : ", getAlbum);
+  const [getInitialSong, setInitialSong] = useState([]);
+  const [searchResult, setSearchResult] = useState([]);
+  const { data: session } = useSession();
+  const [searchValue, setSearchValue] = useRecoilState(searchInputValue);
 
   useEffect(() => {
     if (!session?.accessToken) return;
     spotifyApi.setAccessToken(session.accessToken);
   }, [session]);
 
-  // feaching recent playlist
+  // feaching playlist
+  useEffect(() => {
+    if (!session?.accessToken) return;
+    spotifyApi
+      .getNewReleases()
+      .then((res) => setInitialSong(res.body.albums.items))
+      .catch((err) => console.log(err.message));
+  }, [session]);
+
   useEffect(() => {
     if (!session?.accessToken) return;
     spotifyApi
       .getMyRecentlyPlayedTracks()
       .then((res) => setRecentPlayed(res.body.items))
       .catch((err) => console.log(err.message));
-    // spotifyApi
-    //   .getNewReleases()
-    //   .then((res) => setGetNewRelease(res.body.items))
-    //   .catch((err) => console.log(err.message));
-    // spotifyApi
-    //   .getMyTopTracks()
-    //   .then((res) => setGetTopTrack(res.body.items))
-    //   .catch((err) => console.log(err.message));
-    // spotifyApi
-    //   .getAlbum()
-    //   .then((res) => setGetAlbum(res.body.items))
-    //   .catch((err) => console.log(err.message));
   }, [session]);
+
   useEffect(() => {
+    if (!searchValue) return setSearchResult([]);
     if (!session?.accessToken) return;
     spotifyApi
-      .getMyTopTracks()
-      .then((res) => setGetTopTrack(res.body.items))
+      .searchTracks(searchValue)
+      .then((res) => setSearchResult(res.body.tracks.items))
       .catch((err) => console.log(err.message));
-  });
+  }, [session, searchValue]);
+
   return (
     <>
-      <Row data={recentPlayed} heading="Recently played" />
-      <Row data={getNewRelease} heading="Today's biggest hits" />
-      <Row data={getTopTrack} heading="Pop" />
-      <Row data={getAlbum} heading="Featured Charts" />
+      <div className="grid grid-cols-7 gap-x-4 mt-4 px-6 mb-12">
+        <div className="sm:col-span-5  col-span-7">
+          <div className="flex items-center overflow-x-scroll scrollbar-hide justify-between space-x-7">
+            {searchResult === undefined || searchResult.length === 0
+              ? getInitialSong
+                  .slice(-4)
+                  .map((track) => <SongsPoster key={track.id} track={track} />)
+              : searchResult
+                  .slice(-4)
+                  .map((track) => (
+                    <SongsPoster key={track.id} searchImage track={track} />
+                  ))}
+          </div>
+          <div className="mt-8 bg-gray-800 p-2 max-h-96 overflow-y-scroll scrollbar-thin scrollbar-track-slate-700 scrollbar-thumb-gray-400 rounded-md">
+            <h2 className="text-white font-semibold text-xl mb-6">
+              Top Tracks
+            </h2>
+            {searchResult === undefined || searchResult.length === 0
+              ? getInitialSong.map((track) => (
+                  <AllSongList key={track.id} track={track} />
+                ))
+              : searchResult.map((track) => (
+                  <AllSongList key={track.id} searchImage track={track} />
+                ))}
+          </div>
+        </div>
+        <div className="col-span-2">
+          <RecentPlayed recentPlayed={recentPlayed} />
+
+          <Filter />
+        </div>
+      </div>
     </>
   );
 };
-// spotifyApi.getNewReleases;
-// spotifyApi.getMyTopTracks;
-// spotifyApi.getAlbum;
-// spotifyApi.getArtistTopTracks;
-// spotifyApi.getTracks;
+
 export default Home;

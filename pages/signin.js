@@ -11,6 +11,7 @@ export default function SignIn({ providers }) {
     if (!session) return;
     route.push("/");
   }, [session, route]);
+
   return (
     <>
       <div className="bg-black h-screen flex flex-col items-center pt-40 space-y-8">

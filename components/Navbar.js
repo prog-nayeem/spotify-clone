@@ -8,11 +8,16 @@ import MenuList from "@mui/material/MenuList";
 import Stack from "@mui/material/Stack";
 import { useEffect, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { BsSearch } from "react-icons/bs";
+import { useRecoilState } from "recoil";
+import { searchInputValue, showSearchInput } from "../atoms/searchAtom";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef(null);
   const { data: session } = useSession();
+  const [input, setInput] = useRecoilState(searchInputValue);
+  const [showInput, setShowInput] = useRecoilState(showSearchInput);
 
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -36,7 +41,7 @@ const Navbar = () => {
   }, [open]);
   return (
     <>
-      <nav className="flex items-center justify-between px-10 h-16">
+      <nav className="flex items-center justify-between lg:px-10 px-6 h-16">
         <div className="flex items-center space-x-4">
           <span className="p-2 text-white bg-slate-600 text-xl rounded-full cursor-pointer">
             <IoIosArrowBack />
@@ -44,9 +49,22 @@ const Navbar = () => {
           <span className="p-2 text-slate-400 text-xl bg-slate-600 rounded-full cursor-pointer">
             <IoIosArrowForward />
           </span>
+          {showInput && (
+            <div className="bg-white lg:w-80 w-52 md:w-60 hidden sm:inline-flex rounded-full !ml-7 items-center space-x-3 px-3 h-10">
+              <BsSearch className="text-xl" />
+              <input
+                className="outline-none w-full placeholder:text-ellipsis placeholder:text-gray-400"
+                type="text"
+                placeholder="Artists,songs or products"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+              />
+            </div>
+          )}
         </div>
+
         <div className="flex items-center space-x-5">
-          <button className="uppercase text-sm text-white px-8 border  hover:border-white py-2 rounded-full bg-black hover:scale-110 transform">
+          <button className="uppercase hidden md:inline-block text-sm text-white px-8 border  hover:border-white py-2 rounded-full bg-black hover:scale-110 transform">
             Upgrade
           </button>
           <Stack>
@@ -66,6 +84,7 @@ const Navbar = () => {
                   placement="bottom-start"
                   transition
                   disablePortal
+                  className="z-40 shadow-sm"
                 >
                   {({ TransitionProps, placement }) => (
                     <Grow
@@ -77,7 +96,7 @@ const Navbar = () => {
                             : "left bottom",
                       }}
                     >
-                      <div className="bg-black mt-2 rounded-md text-white w-52">
+                      <div className="bg-black z-40 mt-2 rounded-md text-white w-52">
                         <MenuList autoFocusItem={open}>
                           <MenuItem
                             className="hover:bg-gray-800"
